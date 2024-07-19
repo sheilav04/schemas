@@ -10,7 +10,7 @@ export class CreateSchemaDto {
   description: string;
 
   @IsOptional()
-  scheludedTime?: Date;
+  scheduledTime?: Date;
 
   @IsOptional()
   @IsNumber()

@@ -4,7 +4,7 @@ export class SchemaDto {
 
   description: string;
 
-  scheludedTime?: Date;
+  scheduledTime?: Date;
 
   priority?: number;
 }

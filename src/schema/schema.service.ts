@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
 import { DATABASE_PATH } from '../common/constants/global.constants';
@@ -29,6 +30,10 @@ export class SchemaService {
     return JSON.parse(data.toString());
   }
 
+  getDate() {
+    return new Date().toISOString();
+  }
+
   async readSorted(sort: Object) {
     const data = await this.findAll();
 
@@ -50,10 +55,10 @@ export class SchemaService {
       });
     }
 
-    if (ordered == 'scheludedTime') {
+    if (ordered == 'scheduledTime') {
       data.sort((a, b) => {
-        const fechaA = new Date(a.scheludedTime).getTime();
-        const fechaB = new Date(b.scheludedTime).getTime();
+        const fechaA = new Date(a.scheduledTime).getTime();
+        const fechaB = new Date(b.scheduledTime).getTime();
         if (!fechaA && !fechaB) {
           return 0;
         }
@@ -98,5 +103,30 @@ export class SchemaService {
     data.splice(index, 1);
 
     await fs.writeFile(DATABASE_PATH, JSON.stringify(data));
+  }
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async handleCron() {
+    const horas = 12;
+    let milisegundosHoras = horas * 3600 * 1000;
+    const data = await this.findAll();
+    data.map((task) => {
+      if (task.scheduledTime) {
+        const fecha = new Date(task.scheduledTime).getTime();
+
+        const fechaSistema = new Date().getTime();
+
+        const resta = fecha - fechaSistema;
+
+        if (resta < milisegundosHoras && resta > 0) {
+          let horasRestantes = resta / 3600 / 1000;
+          let minutosDecimal = (horasRestantes - Math.floor(horasRestantes)) * 60;
+          console.log(
+            `La tarea ${task.id} vence en ${Math.round(horasRestantes)} HORAS y en ${Math.round(minutosDecimal)} MINUTO(S)`,
+          );
+        }
+      }
+    });
+    //console.log('se ejcuta cada 5 segundos');
   }
 }
